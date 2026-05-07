@@ -5,7 +5,6 @@ const axios = require('axios');
 const { chromium } = require('playwright');
 
 const app = express();
-
 const PORT = process.env.PORT || 3000;
 
 app.get('/', (req, res) => {
@@ -13,27 +12,22 @@ app.get('/', (req, res) => {
 });
 
 app.get('/health', (req, res) => {
-    res.json({
-        status: 'ok'
-    });
+    res.json({ status: 'ok' });
 });
 
-app.listen(PORT, () => {
+app.listen(PORT, '0.0.0.0', () => {
     console.log(`Server running on ${PORT}`);
 });
 
 let running = false;
 
 async function monitor() {
-
     if (running) return;
-
     running = true;
 
     let browser;
 
     try {
-
         browser = await chromium.launch({
             headless: true,
             args: [
@@ -44,77 +38,42 @@ async function monitor() {
         });
 
         const context = await browser.newContext();
-
         const page = await context.newPage();
 
-        let latestHeaders = null;
+        let headers = null;
 
-        page.on('request', request => {
-
-            const url = request.url();
-
-            console.log('REQ:', url);
-
-            if (url.includes('/api/')) {
-
-                latestHeaders = request.headers();
-
-                console.log('Captured fresh API headers');
+        page.on('request', (req) => {
+            if (req.url().includes('/api/')) {
+                headers = req.headers();
             }
         });
 
         await page.goto(process.env.WEBSITE_URL);
+        await page.waitForTimeout(15000);
 
-        // Wait for QR scan manually first time
-        await page.waitForTimeout(30000);
-
-        // Example protected API request
-        if (latestHeaders) {
-
-            const response = await axios.get(
-                process.env.API_URL,
-                {
-                    headers: latestHeaders
-                }
-            );
+        if (headers) {
+            const response = await axios.get(process.env.API_URL, {
+                headers
+            });
 
             console.log(response.data);
 
-            // Example alert condition
-            if (response.data.count > 10) {
-
-                await axios.post(
-                    process.env.SLACK_WEBHOOK,
-                    {
-                        text: `ALERT count: ${response.data.count}`
-                    }
-                );
-
-                console.log('Alert sent');
+            if (response.data?.count > 10) {
+                await axios.post(process.env.SLACK_WEBHOOK, {
+                    text: `ALERT: ${response.data.count}`
+                });
             }
         }
 
-        await context.storageState({
-            path: './user-data/state.json'
-        });
+        await context.close();
 
     } catch (err) {
-
-        console.log(err.message);
-
+        console.log('ERROR:', err.message);
     } finally {
-
-        if (browser) {
-            await browser.close();
-        }
-
+        if (browser) await browser.close();
         running = false;
     }
 }
 
-// Run every minute
 setInterval(monitor, 60000);
-
-// Run immediately
 monitor();
-```
