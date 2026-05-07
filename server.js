@@ -30,6 +30,7 @@ async function monitor() {
     try {
 browser = await chromium.launch({
     headless: true,
+    executablePath: process.env.PLAYWRIGHT_CHROMIUM_EXECUTABLE_PATH,
     args: [
         '--no-sandbox',
         '--disable-setuid-sandbox',
@@ -37,7 +38,6 @@ browser = await chromium.launch({
         '--disable-gpu'
     ]
 });
-
 
         const context = await browser.newContext();
         const page = await context.newPage();
