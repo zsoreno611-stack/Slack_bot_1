@@ -1,18 +1,16 @@
-```json
 {
-  "name": "railway-playwright-monitor",
-  "version": "1.0.0",
-  "description": "QR Login Monitor",
-  "main": "server.js",
-  "scripts": {
-    "start": "node server.js",
-    "postinstall": "playwright install chromium"
-  },
-  "dependencies": {
-    "axios": "^1.7.2",
-    "dotenv": "^16.4.5",
-    "express": "^4.19.2",
-    "playwright": "^1.53.0"
-  }
+"name": "railway-playwright-monitor",
+"version": "1.0.0",
+"description": "QR Login Monitor",
+"main": "server.js",
+"scripts": {
+"start": "node server.js",
+"postinstall": "npx playwright install chromium"
+},
+"dependencies": {
+"axios": "^1.7.2",
+"dotenv": "^16.4.5",
+"express": "^4.19.2",
+"playwright": "^1.53.0"
 }
-```
+}
